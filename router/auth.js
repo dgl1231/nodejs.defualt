@@ -12,6 +12,7 @@ let authData = {
 }
 
 router.get('/', (req, res) => {
+    console.log("sID::::::::", req.sessionID);
     res.render('login.ejs', { title: '로그인페이지', id: null });
 })
 router.post('/login', (req, res) => {
@@ -24,16 +25,12 @@ router.post('/login', (req, res) => {
         } else {
             console.log(result.rowCount);
             if (result.rowCount) {
-                let userInfo = {
-                    user_id: authData.id,
-                    is_logined: true
-                }
-                req.session.userInfo = userInfo;
+                req.session.userID = authData.id;
+                req.session.is_logined = true;
                 req.session.save(function (err) {
-                    if (err) throw err;
                     console.log(req.session);
-                    res.redirect('/');
-                })
+                    res.redirect("/");
+                });
             }
             else { res.redirect('/auth') };
         }
@@ -41,11 +38,13 @@ router.post('/login', (req, res) => {
 
 });
 router.get('/logout', (req, res) => {
+    console.log(req.sessionID);
     req.session.destroy(function (err) {
         if (err) throw err;
-        console.log("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
-        res.redirect('/');
+        req.session;
     });
+    res.redirect('/');
+
 });
 
 export default router;
