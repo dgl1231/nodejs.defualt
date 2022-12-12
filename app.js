@@ -2,10 +2,11 @@
 import express from "express";
 import expressEjsLayouts from "express-ejs-layouts";
 import ejs from "ejs";
-import cookieParser from "cookie-parser";
 import session from "express-session";
 import pgSession from "connect-pg-simple";
-let pgSessions = pgSession(session);
+let pgSe = pgSession(session);
+// import fileStore from "session-file-store";
+// let fs = fileStore(session);
 import loger from "morgan";
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -26,33 +27,34 @@ import authRoute from "./router/auth.js";
 //config
 const app = express();
 
-//path const variable
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
+//port setting
+app.set("port", 3002);
 
 //session setting
 const sessionDBaccess = new pg.Pool(db_connection);
 const sessionMiddleware = {
-    store: new pgSessions({
+    store: new pgSe({
         pool: sessionDBaccess,
         tableName: 'session'
     }),
     name: 'SID',
-    secret: randomString.generate({
-        length: 14,
-        charset: 'alphanumeric'
-    }),
+    secret: 'secret key',
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false,
     cookie: {
-        maxAge: 1000 * 60 * 60 * 24 * 7,
-        aameSite: true,
-        secure: true // ENABLE ONLY ON HTTPS
-    }
+        path: '/',
+        maxAge: 1000 * 60 * 60 * 24,
+        sameSite: 'None',
+        secure: false
+    },
+    rolling: false
 };
 app.use(session(sessionMiddleware));
 
+//path const variable
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 
 //static file setting
@@ -66,9 +68,6 @@ app.set('layout extractScripts', true);
 app.set('view engine', 'ejs');
 app.engine('html', ejs.renderFile);
 
-//port setting
-app.set("port", process.env.PORT || 3002);
-
 //app log settings
 app.use(loger('dev'));
 
@@ -77,10 +76,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 //request cookie parser middleware
-app.use(cookieParser(process.env.COOKIE_SECRET));
+//app.use(cookieParser());
 
 
-// 로그인, 사이드바, 헤더, 푸터 설정
 
 app.use('/', mainRoute);
 
