@@ -5,19 +5,16 @@ const router = express.Router();
 const conn = database;
 
 
-router.get("/", (req, res, next) => {
-    req.session.reload(function () {
-        console.log(req.session);
-    });
-
-
-    console.log("mainpage");
-    // // if (!req.session.userInfo) {
-    // //     res.redirect('/auth');
-    // // } else {
-    // //     res.render('mainPage.ejs', { title: '메인페이지' });
-    // // }'
-    res.render('mainPage.ejs', { title: 'mainpage' });
+router.get("/", (req, res) => {
+    console.log("메인페이지");
+    var session = req.session;
+    console.log(session);
+    // if (!req.session.userInfo) {
+    //     res.redirect('/auth');
+    // } else {
+    //     res.render('mainPage.ejs', { title: '메인페이지' });
+    // }'
+    res.render('mainPage.ejs', { title: '메인페이지' });
 
 });
 

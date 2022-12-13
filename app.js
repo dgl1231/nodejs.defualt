@@ -2,11 +2,10 @@
 import express from "express";
 import expressEjsLayouts from "express-ejs-layouts";
 import ejs from "ejs";
+import cookieParser from "cookie-parser";
 import session from "express-session";
 import pgSession from "connect-pg-simple";
-let pgSe = pgSession(session);
-// import fileStore from "session-file-store";
-// let fs = fileStore(session);
+let pgSessions = pgSession(session);
 import loger from "morgan";
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -27,34 +26,33 @@ import authRoute from "./router/auth.js";
 //config
 const app = express();
 
+//path const variable
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-//port setting
-app.set("port", 3002);
 
 //session setting
 const sessionDBaccess = new pg.Pool(db_connection);
 const sessionMiddleware = {
-    store: new pgSe({
+    store: new pgSessions({
         pool: sessionDBaccess,
         tableName: 'session'
     }),
     name: 'SID',
-    secret: 'secret key',
+    secret: randomString.generate({
+        length: 14,
+        charset: 'alphanumeric'
+    }),
     resave: false,
-    saveUninitialized: false,
+    saveUninitialized: true,
     cookie: {
-        path: '/',
-        maxAge: 1000 * 60 * 60 * 24,
-        sameSite: 'None',
-        secure: false
-    },
-    rolling: false
+        maxAge: 1000 * 60 * 60 * 24 * 7,
+        sameSite: "none",
+        secure: false // ENABLE ONLY ON HTTPS
+    }
 };
 app.use(session(sessionMiddleware));
 
-//path const variable
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 
 //static file setting
@@ -68,6 +66,9 @@ app.set('layout extractScripts', true);
 app.set('view engine', 'ejs');
 app.engine('html', ejs.renderFile);
 
+//port setting
+app.set("port", process.env.PORT || 3002);
+
 //app log settings
 app.use(loger('dev'));
 
@@ -76,9 +77,17 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 //request cookie parser middleware
-//app.use(cookieParser());
+app.use(cookieParser(process.env.COOKIE_SECRET));
+
+//server setting
+const server = app.listen(app.get("port"), () => {
+    console.log(app.get("port"), "번 포트에서 실행중");
+})
 
 
+
+
+// route
 
 app.use('/', mainRoute);
 
@@ -95,27 +104,21 @@ app.use('/statistics', statisticsRoute);
 app.use('/auth', authRoute);
 
 
-// find 404error and go to error handler
-app.use((req, res, next) => {
-    const err = new Error("Not Found");
-    err.status = 404;
-    next(err);
-});
+// // find 404error and go to error handler
+// app.use((req, res, next) => {
+//     const err = new Error("Not Found");
+//     err.status = 404;
+//     next(err);
+// });
 
-// error handler
-app.use((err, req, res, next) => {
-    console.log(err);
+// // error handler
+// app.use((err, req, res, next) => {
+//     console.log(err);
 
-    //res.local.message = err.message;
-    //res.local.error = req.app.get("env") === "developnent" ? err : {};
+//     //res.local.message = err.message;
+//     //res.local.error = req.app.get("env") === "developnent" ? err : {};
 
-    res.status(err.status || 500);
-    res.render("error");
-});
-
-//server setting
-const server = app.listen(app.get("port"), () => {
-    console.log(app.get("port"), "번 포트에서 실행중");
-})
-
+//     res.status(err.status || 500);
+//     res.render("error");
+// });
 

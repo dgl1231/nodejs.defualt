@@ -12,12 +12,13 @@ let authData = {
 }
 
 router.get('/', (req, res) => {
-    console.log("sID::::::::", req.sessionID);
+    console.log(req.session);
     res.render('login.ejs', { title: '로그인페이지', id: null });
 })
 router.post('/login', (req, res) => {
     authData.id = req.body.id;
     authData.password = req.body.password;
+    var sess = req.session;
     const loginSQL = `SELECT * FROM ACCOUNT_TEST WHERE UID = '${authData.id}' AND UPW = '${authData.password}'`;
     conn.query(loginSQL, (error, result) => {
         if (error) {
@@ -25,26 +26,26 @@ router.post('/login', (req, res) => {
         } else {
             console.log(result.rowCount);
             if (result.rowCount) {
-                req.session.userID = authData.id;
-                req.session.is_logined = true;
-                req.session.save(function (err) {
-                    console.log(req.session);
-                    res.redirect("/");
-                });
+
+                sess.user_id = authData.id;
+                sess.is_logined = true;
+                console.log(req.session);
+                sess.save(err => {
+                    if (err) throw err;
+                    setTimeout(() => res.redirect(302, '/'), 5000);
+
+                })
             }
             else { res.redirect('/auth') };
         }
     });
-
 });
 router.get('/logout', (req, res) => {
-    console.log(req.sessionID);
-    req.session.destroy(function (err) {
-        if (err) throw err;
-        req.session;
-    });
-    res.redirect('/');
-
+    // req.session.destroy(function (err) {
+    //     if (err) throw err;
+    //     console.log("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+    //     res.redirect('/');
+    // });
 });
 
 export default router;
